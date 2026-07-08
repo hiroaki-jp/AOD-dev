@@ -8,7 +8,11 @@ from __future__ import annotations
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-app = FastAPI(title="sample-app", version="0.1.0")
+from app import APP_VERSION
+from app.routers import version
+
+app = FastAPI(title="sample-app", version=APP_VERSION)
+app.include_router(version.router)
 
 
 class HealthResponse(BaseModel):
