@@ -1,0 +1,88 @@
+name: sample-app-ci
+
+# テストプロファイル(AOD 設計):
+#   smoke    = lint + 型 + ユニットテスト + ビルド(integration マーカーを除外)
+#   standard = smoke + 統合テスト(integration マーカー)
+#   release  = standard + E2E + セキュリティスキャン(リリース判定前に強制)
+# push / PR は smoke。standard / release は workflow_dispatch で指定する。
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "sample_app/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    paths:
+      - "sample_app/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "テストプロファイル"
+        type: choice
+        options: [smoke, standard, release]
+        default: standard
+
+env:
+  PROFILE: ${{ github.event.inputs.profile || 'smoke' }}
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sample_app/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: sample_app/backend/requirements*.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Lint (ruff)
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Type check (mypy strict)
+        run: mypy app tests
+      - name: Test
+        run: |
+          if [ "$PROFILE" = "smoke" ]; then
+            pytest -m "not integration and not e2e"
+          else
+            pytest -m "not e2e"
+          fi
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sample_app/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: sample_app/frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Test
+        run: npm test -- --run
+      - name: Build (型チェック込み)
+        run: npm run build
+
+  release-checks:
+    # release プロファイル時のみ: E2E + セキュリティスキャン(初版はプレースホルダ)
+    if: ${{ (github.event.inputs.profile || 'smoke') == 'release' }}
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: E2E placeholder
+        run: echo "TODO(AOD M4): E2E テストをここに実装する"
+      - name: Security scan placeholder
+        run: echo "TODO(AOD M4): pip-audit / npm audit / SAST をここに実装する"
