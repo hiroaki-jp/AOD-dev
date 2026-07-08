@@ -83,6 +83,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: E2E placeholder
-        run: echo "TODO(AOD M4): E2E テストをここに実装する"
+        run: |
+          echo "TODO(AOD M4) E2E テストをここに実装する"
       - name: Security scan placeholder
-        run: echo "TODO(AOD M4): pip-audit / npm audit / SAST をここに実装する"
+        run: |
+          echo "TODO(AOD M4) pip-audit / npm audit / SAST をここに実装する"
