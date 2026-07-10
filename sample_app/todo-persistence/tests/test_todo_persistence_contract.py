@@ -25,7 +25,7 @@ def test_受入基準_ddl_に必要な列制約とindexが含まれる() -> None
     assert "CREATE INDEX IF NOT EXISTS idx_todos_created_at ON todos (created_at);" in ddl
 
 
-def test_受入基準_repository_境界は一覧追加完了更新のみを契約化する() -> None:
+def test_受入基準_repository_境界は一覧追加完了のみを契約化する() -> None:
     node = ast.parse(CONTRACT_PY.read_text(encoding="utf-8"))
 
     todo_repository_class = next(
@@ -39,4 +39,4 @@ def test_受入基準_repository_境界は一覧追加完了更新のみを契�
         if isinstance(method, ast.FunctionDef)
     ]
 
-    assert methods == ["list_todos", "add_todo", "mark_todo_completed"]
+    assert set(methods) == {"list_todos", "add_todo", "mark_todo_completed"}
