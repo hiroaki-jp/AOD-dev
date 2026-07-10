@@ -23,4 +23,7 @@ class TodoRepository(Protocol):
         """新規 TODO を永続化して返す。"""
 
     def mark_todo_completed(self, *, todo_id: UUID) -> TodoRecord:
-        """既存 TODO を完了状態に更新して返す。"""
+        """既存 TODO を完了状態に更新して返す。
+
+        todo_id が存在しない場合は not-found 相当の例外を送出する。
+        """
