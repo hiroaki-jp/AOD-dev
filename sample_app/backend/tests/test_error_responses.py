@@ -68,4 +68,3 @@ def test_unhandled_exception_returns_json() -> None:
     assert res.headers["content-type"].startswith("application/json")
     body = res.json()
     assert "detail" in body
-
