@@ -12,11 +12,24 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 
+def _find_pyproject_path(start_dir: Path) -> Path:
+    for directory in (start_dir, *start_dir.parents):
+        pyproject_path = directory / "pyproject.toml"
+        if pyproject_path.is_file():
+            return pyproject_path
+    msg = "pyproject.toml was not found in parent directories"
+    raise FileNotFoundError(msg)
+
+
 def _load_project_version() -> str:
-    pyproject_path = Path(__file__).resolve().parent.parent / "pyproject.toml"
-    with pyproject_path.open("rb") as pyproject_file:
-        pyproject = tomllib.load(pyproject_file)
-    return str(pyproject["project"]["version"])
+    pyproject_path = _find_pyproject_path(Path(__file__).resolve().parent)
+    try:
+        with pyproject_path.open("rb") as pyproject_file:
+            pyproject = tomllib.load(pyproject_file)
+        return str(pyproject["project"]["version"])
+    except (OSError, tomllib.TOMLDecodeError, KeyError, TypeError) as exc:
+        msg = f"Failed to load project.version from {pyproject_path}: {type(exc).__name__}: {exc}"
+        raise RuntimeError(msg) from exc
 
 
 app = FastAPI(title="sample-app", version=_load_project_version())
