@@ -33,10 +33,26 @@ def test_受入基準_repository_境界は一覧追加完了のみを契約化�
         for class_def in node.body
         if isinstance(class_def, ast.ClassDef) and class_def.name == "TodoRepository"
     )
-    methods = [
-        method.name
+    methods = {
+        method.name: method
         for method in todo_repository_class.body
         if isinstance(method, ast.FunctionDef)
-    ]
+    }
 
-    assert set(methods) == {"list_todos", "add_todo", "mark_todo_completed"}
+    assert set(methods.keys()) == {"list_todos", "add_todo", "mark_todo_completed"}
+
+    list_todos = methods["list_todos"]
+    assert [arg.arg for arg in list_todos.args.args] == ["self"]
+    assert ast.unparse(list_todos.returns) == "list[TodoRecord]"
+
+    add_todo = methods["add_todo"]
+    assert [arg.arg for arg in add_todo.args.args] == ["self"]
+    assert [arg.arg for arg in add_todo.args.kwonlyargs] == ["title"]
+    assert ast.unparse(add_todo.args.kwonlyargs[0].annotation) == "str"
+    assert ast.unparse(add_todo.returns) == "TodoRecord"
+
+    mark_completed = methods["mark_todo_completed"]
+    assert [arg.arg for arg in mark_completed.args.args] == ["self"]
+    assert [arg.arg for arg in mark_completed.args.kwonlyargs] == ["todo_id"]
+    assert ast.unparse(mark_completed.args.kwonlyargs[0].annotation) == "UUID"
+    assert ast.unparse(mark_completed.returns) == "TodoRecord"
