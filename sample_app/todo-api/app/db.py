@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import uuid as uuid_module
+from typing import Protocol
 from uuid import UUID
 
 import psycopg2
@@ -20,63 +21,91 @@ class TodoNotFoundError(Exception):
     """todo_id に対応する TODO が存在しない場合の例外。"""
 
 
+class TodoRepository(Protocol):
+    def list_todos(self) -> list[Todo]:
+        """Persisted TODO 一覧を返す。
+
+        永続化層障害時は psycopg2.Error を送出する。
+        """
+
+    def add_todo(self, *, title: str) -> Todo:
+        """新規 TODO を永続化して返す。
+
+        永続化層障害時は psycopg2.Error を送出する。
+        """
+
+    def mark_todo_completed(self, *, todo_id: UUID) -> Todo:
+        """既存 TODO を完了状態に更新して返す。
+
+        todo_id が存在しない場合は TodoNotFoundError を送出する。
+        永続化層障害時は psycopg2.Error を送出する。
+        """
+
+
 def get_connection(settings: Settings) -> psycopg2.extensions.connection:
     return psycopg2.connect(settings.database_url)
 
 
-def list_todos(conn: psycopg2.extensions.connection) -> list[Todo]:
-    with conn.cursor() as cur:
-        cur.execute(
-            "SELECT id, title, is_completed, created_at, updated_at FROM todos ORDER BY created_at",
-        )
-        return [
-            Todo(
+class Psycopg2TodoRepository:
+    def __init__(self, conn: psycopg2.extensions.connection) -> None:
+        self._conn = conn
+
+    def list_todos(self) -> list[Todo]:
+        with self._conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, title, is_completed, created_at, updated_at"
+                " FROM todos ORDER BY created_at",
+            )
+            return [
+                Todo(
+                    id=row[0],
+                    title=row[1],
+                    is_completed=row[2],
+                    created_at=row[3],
+                    updated_at=row[4],
+                )
+                for row in cur.fetchall()
+            ]
+
+    def add_todo(self, *, title: str) -> Todo:
+        new_id = uuid_module.uuid4()
+        with self._conn, self._conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO todos (id, title)"
+                " VALUES (%s, %s)"
+                " RETURNING id, title, is_completed, created_at, updated_at",
+                (str(new_id), title),
+            )
+            row = cur.fetchone()
+            assert row is not None
+            return Todo(
                 id=row[0],
                 title=row[1],
                 is_completed=row[2],
                 created_at=row[3],
                 updated_at=row[4],
             )
-            for row in cur.fetchall()
-        ]
+
+    def mark_todo_completed(self, *, todo_id: UUID) -> Todo:
+        with self._conn, self._conn.cursor() as cur:
+            cur.execute(
+                "UPDATE todos"
+                " SET is_completed = TRUE, updated_at = now()"
+                " WHERE id = %s"
+                " RETURNING id, title, is_completed, created_at, updated_at",
+                (str(todo_id),),
+            )
+            row = cur.fetchone()
+            if row is None:
+                raise TodoNotFoundError(todo_id)
+            return Todo(
+                id=row[0],
+                title=row[1],
+                is_completed=row[2],
+                created_at=row[3],
+                updated_at=row[4],
+            )
 
 
-def add_todo(conn: psycopg2.extensions.connection, *, title: str) -> Todo:
-    new_id = uuid_module.uuid4()
-    with conn, conn.cursor() as cur:
-        cur.execute(
-            "INSERT INTO todos (id, title)"
-            " VALUES (%s, %s)"
-            " RETURNING id, title, is_completed, created_at, updated_at",
-            (str(new_id), title),
-        )
-        row = cur.fetchone()
-        assert row is not None
-        return Todo(
-            id=row[0],
-            title=row[1],
-            is_completed=row[2],
-            created_at=row[3],
-            updated_at=row[4],
-        )
-
-
-def mark_todo_completed(conn: psycopg2.extensions.connection, *, todo_id: UUID) -> Todo:
-    with conn, conn.cursor() as cur:
-        cur.execute(
-            "UPDATE todos"
-            " SET is_completed = TRUE, updated_at = now()"
-            " WHERE id = %s"
-            " RETURNING id, title, is_completed, created_at, updated_at",
-            (str(todo_id),),
-        )
-        row = cur.fetchone()
-        if row is None:
-            raise TodoNotFoundError(todo_id)
-        return Todo(
-            id=row[0],
-            title=row[1],
-            is_completed=row[2],
-            created_at=row[3],
-            updated_at=row[4],
-        )
+def get_todo_repository(conn: psycopg2.extensions.connection) -> TodoRepository:
+    return Psycopg2TodoRepository(conn)
