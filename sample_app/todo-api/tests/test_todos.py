@@ -190,7 +190,7 @@ def test_受入基準5_patch_レスポンス形状がtodo契約に一致する(
     assert set(body.keys()) == {"id", "title", "is_completed", "created_at", "updated_at"}
 
 
-def test_受入基準2_永続化失敗時は_503とログを返す(
+def test_post_永続化失敗時は_503とログを返す(
     client: TestClient,
     override_repo: MagicMock,
 ) -> None:
@@ -204,7 +204,7 @@ def test_受入基準2_永続化失敗時は_503とログを返す(
     logger_mock.exception.assert_called_once_with("Failed to add todo")
 
 
-def test_受入基準2_一覧取得の永続化失敗時は_503とログを返す(
+def test_get_永続化失敗時は_503とログを返す(
     client: TestClient,
     override_repo: MagicMock,
 ) -> None:
@@ -218,7 +218,7 @@ def test_受入基準2_一覧取得の永続化失敗時は_503とログを返�
     logger_mock.exception.assert_called_once_with("Failed to list todos")
 
 
-def test_受入基準2_完了更新の永続化失敗時は_503とログを返す(
+def test_patch_永続化失敗時は_503とログを返す(
     client: TestClient,
     override_repo: MagicMock,
 ) -> None:
