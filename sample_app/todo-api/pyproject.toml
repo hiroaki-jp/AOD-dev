@@ -1,0 +1,24 @@
+[project]
+name = "todo-api"
+version = "0.1.0"
+description = "TODO management API (FastAPI + psycopg2)"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "integration: DB 等の外部依存が必要なテスト(standard 以上のプロファイルで実行)",
+    "e2e: E2E テスト(release プロファイルで実行)",
+]
