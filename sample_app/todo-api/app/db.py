@@ -23,13 +23,23 @@ class TodoNotFoundError(Exception):
 
 class TodoRepository(Protocol):
     def list_todos(self) -> list[Todo]:
-        """Persisted TODO 一覧を返す。"""
+        """Persisted TODO 一覧を返す。
+
+        永続化層障害時は psycopg2.Error を送出する。
+        """
 
     def add_todo(self, *, title: str) -> Todo:
-        """新規 TODO を永続化して返す。"""
+        """新規 TODO を永続化して返す。
+
+        永続化層障害時は psycopg2.Error を送出する。
+        """
 
     def mark_todo_completed(self, *, todo_id: UUID) -> Todo:
-        """既存 TODO を完了状態に更新して返す。"""
+        """既存 TODO を完了状態に更新して返す。
+
+        todo_id が存在しない場合は TodoNotFoundError を送出する。
+        永続化層障害時は psycopg2.Error を送出する。
+        """
 
 
 def get_connection(settings: Settings) -> psycopg2.extensions.connection:

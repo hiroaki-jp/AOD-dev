@@ -7,7 +7,7 @@ from uuid import UUID
 from app.db import Psycopg2TodoRepository
 
 
-def test_受入基準3_完了更新sqlは_is_completedとupdated_atのみを更新する() -> None:
+def test_mark_todo_completed_updates_only_required_fields() -> None:
     conn = MagicMock()
     conn.__enter__.return_value = conn
     conn.__exit__.return_value = None

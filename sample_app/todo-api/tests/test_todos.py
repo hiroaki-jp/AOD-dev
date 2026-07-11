@@ -194,7 +194,7 @@ def test_post_永続化失敗時は_503とログを返す(
     client: TestClient,
     override_repo: MagicMock,
 ) -> None:
-    override_repo.add_todo.side_effect = psycopg2.Error("db failure")
+    override_repo.add_todo.side_effect = psycopg2.OperationalError("db failure")
 
     with patch("app.routers.todos.logger") as logger_mock:
         res = client.post("/api/v1/todos", json={"title": "Test TODO"})
@@ -208,7 +208,7 @@ def test_get_永続化失敗時は_503とログを返す(
     client: TestClient,
     override_repo: MagicMock,
 ) -> None:
-    override_repo.list_todos.side_effect = psycopg2.Error("db failure")
+    override_repo.list_todos.side_effect = psycopg2.OperationalError("db failure")
 
     with patch("app.routers.todos.logger") as logger_mock:
         res = client.get("/api/v1/todos")
@@ -222,7 +222,7 @@ def test_patch_永続化失敗時は_503とログを返す(
     client: TestClient,
     override_repo: MagicMock,
 ) -> None:
-    override_repo.mark_todo_completed.side_effect = psycopg2.Error("db failure")
+    override_repo.mark_todo_completed.side_effect = psycopg2.OperationalError("db failure")
 
     with patch("app.routers.todos.logger") as logger_mock:
         res = client.patch(f"/api/v1/todos/{SAMPLE_ID}/complete")
