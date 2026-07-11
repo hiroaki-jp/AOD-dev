@@ -19,6 +19,10 @@ from app.models import Todo
 class TodoNotFoundError(Exception):
     """todo_id に対応する TODO が存在しない場合の例外。"""
 
+    def __init__(self, todo_id: UUID) -> None:
+        super().__init__(f"Todo with id {todo_id} not found")
+        self.todo_id = todo_id
+
 
 def get_connection(settings: Settings) -> psycopg2.extensions.connection:
     return psycopg2.connect(settings.database_url)

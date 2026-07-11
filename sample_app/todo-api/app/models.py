@@ -35,6 +35,6 @@ class CreateTodoRequest(BaseModel):
         stripped = v.strip()
         if not stripped:
             raise ValueError("title must not be blank")
-        if len(v) > 255:
+        if len(stripped) > 255:
             raise ValueError("title must not exceed 255 characters")
         return v
