@@ -1,0 +1,21 @@
+[project]
+name = "todo-smoke-tests"
+version = "0.1.0"
+description = "smoke プロファイルのスモークテスト群 (develop ブランチで実行)"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+# smoke プロファイル: develop ブランチで動かす想定のスモークテスト群
+#
+# 実行例:
+#   pytest -m smoke                              # DB 不要のスモーク全体
+#   pytest -m "smoke and integration"            # DB 込みスモーク (DATABASE_URL 必須)
+#   pytest -m "smoke and not integration"        # DB 不要のスモークのみ
+#
+# DATABASE_URL が未設定の場合、integration マーカーを持つテストは自動スキップされる。
+testpaths = ["."]
+pythonpath = ["../todo-api"]
+markers = [
+    "smoke: develop 向けスモークテスト(API 契約・エラー応答・永続化を検証する)",
+    "integration: DB 等の外部依存が必要なテスト(DATABASE_URL 設定が必須)",
+]
